@@ -1,0 +1,63 @@
+.data
+
+CONTROL: .word 0x10000
+DATA:    .word 0x10008
+
+str:  .asciiz "I am a string, capitalize me!"
+alphalower:  .asciiz "abcdefghijklmnopqrstuvwxyz"
+alphahigher:  .asciiz "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+.text
+daddi r1, r0, 0 ;set up a counter i to go through str
+daddi r10,r0,1 ; set it to 1 initially so we capitalizefirst
+
+
+ld r20,CONTROL(r0)
+ld r21,DATA(r0)
+
+loop1:
+daddi r3,r0,0 ; set up / flush alphabet counter
+lb r2,str(r1) ;load ith byte into r2
+;; we need to check if its lowercase first!!
+;;!!!!!!!!!!!!!!!! or a space ! !!!!!!!!
+beqz r2,done ;we're done if we get to 0 cause its null terminated
+daddi r1,r1,1 ; i++
+
+daddi r9,r0,32 ;put 32(decimal value for ascii space in r9)
+beq r9,r2,isspace ;
+daddi r8,r0, 96 ; put the hex for the last upper chars in ascii table into r8
+slt r11, r8,r2 ; check r2 is greater than the last upper chars
+beqz r11, loop1 ;go to top to do next letter if its already a cap
+bnez r10,loop2 ;if r10 isnt 0 go to loop 2 and do ur shit
+j loop1              ;otherwise we dont dawg
+
+
+isspace:
+daddi r10,r0,1 ; set r10 to 1
+j loop1
+
+loop2:
+lb r4,alphalower(r3) ;load jth byte into r4
+beq r2,r4,foundit
+
+daddi r3,r3,1 ; j++
+j loop2
+
+foundit:
+lb r5, alphahigher(r3) ;load upper case version of the letter
+daddi r1,r1,-1
+sb r5, str(r1) ;store it into r1
+daddi r1,r1,1
+daddi r10,r0,0 ;set the space flag back to 0 dawg B-)
+j loop1 ;go back to start of loop1
+
+done:
+
+daddi r1,r0,str ;put str in r1
+sd r1,0(r21) ;write digit to DATA
+
+daddi r1,r0,4 ; put 4 in r1
+sd r1,0(r20) ;push string out by setting control to 4
+
+halt
